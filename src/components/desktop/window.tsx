@@ -9,8 +9,7 @@ export function Window({ win, active, update, focus, close, children }: {
 }) {
   const move = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const resize = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
-  if (win.minimized) return null;
-  return <section role="dialog" aria-label={win.title} className={`app-window ${active ? 'focused' : ''} ${win.maximized ? 'maximized' : ''}`}
+  return <section role="dialog" aria-label={win.title} className={`app-window ${active ? 'focused' : ''} ${win.maximized ? 'maximized' : ''} ${win.minimized ? 'minimized' : ''}`}
     style={{ left: win.x, top: win.y, width: win.width, height: win.height, zIndex: win.z }} onPointerDown={focus}>
     <header className="window-titlebar" onDoubleClick={() => update({ maximized: !win.maximized })}
       onPointerDown={e => { if ((e.target as HTMLElement).closest('button') || win.maximized) return; e.currentTarget.setPointerCapture(e.pointerId); move.current = { x: e.clientX, y: e.clientY, ox: win.x, oy: win.y }; }}

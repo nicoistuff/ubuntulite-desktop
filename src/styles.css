@@ -210,3 +210,5 @@ input[type=range] { accent-color: var(--primary); width: 100%; }
   .about-details div { flex-direction: column; gap: 4px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+.app-window.minimized, .overview-shown .app-window { display: none; }
