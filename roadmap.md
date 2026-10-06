@@ -1,6 +1,6 @@
 # Ubuntu 26.04 LTS browser desktop
 
-- [ ] Phase 1: desktop, panel, dock, window manager, launcher; verify and document.
+- [x] Phase 1: desktop, panel, dock, window manager, launcher; verify and document.
 - [ ] Phase 2: persistent filesystem, file manager, terminal commands.
 - [ ] Phase 3: settings, themes, wallpapers, notifications, quick settings.
 - [ ] Phase 4: software center and application management.
