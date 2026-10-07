@@ -80,6 +80,9 @@ button { user-select: none; }
 .home-folder { width: 47px; height: 38px; background: var(--folder); border-bottom: 4px solid var(--folder-edge); color: var(--primary-foreground); border-radius: 4px; position: relative; display: grid; place-items: center; }
 .home-folder::before { content: ''; position: absolute; left: 0; top: -5px; width: 22px; height: 6px; background: var(--folder-edge); border-radius: 4px 5px 0 0; }
 .home-folder svg { width: 24px; height: 24px; }
+.desktop-file { width: 40px; height: 46px; display: grid; place-items: center; color: var(--foreground); }
+.desktop-file svg { width: 40px; height: 46px; }
+.desktop-icons { display: flex; flex-direction: column; flex-wrap: wrap; max-height: calc(100vh - 80px); gap: 6px; }
 .desktop-version { position: absolute; right: 25px; bottom: 17px; color: var(--shell-text); opacity: .6; font-size: 12px; pointer-events: none; }
 .app-window { position: absolute; background: var(--background); border: 1px solid var(--shell-border); border-radius: 11px; overflow: hidden; box-shadow: var(--window-shadow); max-width: calc(100vw - 76px); max-height: calc(100dvh - 34px); display: flex; flex-direction: column; animation: window-open 160ms ease-out; }
 .app-window.maximized { left: 68px !important; top: 34px !important; width: calc(100% - 68px) !important; height: calc(100% - 34px) !important; max-width: none; border-radius: 0; }
