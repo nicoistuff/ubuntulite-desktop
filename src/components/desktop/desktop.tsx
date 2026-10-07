@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
-import { BatteryFull, ChevronDown, CircleHelp, Grid3X3, Home, Monitor, Search, Settings, Trash2, Volume2, Wifi, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { BatteryFull, ChevronDown, CircleHelp, File, Folder, Grid3X3, Home, Monitor, Search, Settings, Trash2, Volume2, Wifi, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import wallpaper from '@/assets/ubuntu-wallpaper.jpg';
+import * as fs from '@/lib/vfs';
 import { AppIcon } from './app-icon';
 import { apps, type AppId } from './apps';
 import { Window, type DesktopWindow } from './window';
 import { AppContent } from './app-content';
+import { openNode } from './files-app';
+import { useVfs, type OpenRequest } from './use-vfs';
 
 export function Desktop() {
   const [windows, setWindows] = useState<DesktopWindow[]>([{ id: 1, app: 'files', title: 'Home', x: 180, y: 125, width: 860, height: 530, z: 2, minimized: false, maximized: false }]);
@@ -21,12 +24,20 @@ export function Desktop() {
   const [volume, setVolume] = useState(65);
   const [notice, setNotice] = useState('');
   const focus = (id: number) => { setActive(id); setWindows(prev => prev.map(w => w.id === id ? { ...w, z: Math.max(...prev.map(p => p.z), 1) + 1, minimized: false } : w)); };
-  const launch = (app: AppId, newWindow = false) => {
+  const launch = (app: AppId, newWindow = false, path?: string) => {
     const existing = windows.find(w => w.app === app);
-    if (existing && !newWindow) focus(existing.id);
-    else { const id = Date.now(); const appInfo = apps.find(a => a.id === app); setWindows(prev => [...prev, { id, app, title: app === 'files' ? 'Home' : appInfo?.name ?? app, x: Math.max(76, Math.min(window.innerWidth - 460, 200 + prev.length * 24)), y: 100 + (prev.length % 5) * 30, width: Math.min(app === 'terminal' ? 730 : 860, window.innerWidth - 96), height: Math.min(530, window.innerHeight - 130), z: Math.max(...prev.map(w => w.z), 1) + 1, minimized: false, maximized: false }]); setActive(id); }
+    if (existing && !newWindow && !path) focus(existing.id);
+    else { const id = Date.now() + Math.random(); const appInfo = apps.find(a => a.id === app); setWindows(prev => [...prev, { id, app, path, title: app === 'files' ? 'Home' : appInfo?.name ?? app, x: Math.max(76, Math.min(window.innerWidth - 460, 200 + prev.length * 24)), y: 100 + (prev.length % 5) * 30, width: Math.min(app === 'terminal' ? 730 : 860, window.innerWidth - 96), height: Math.min(530, window.innerHeight - 130), z: Math.max(...prev.map(w => w.z), 1) + 1, minimized: false, maximized: false }]); setActive(id); }
     setOverview(false); setPopover(null); setContext(null);
   };
+  const launchRef = useRef(launch); launchRef.current = launch;
+  useEffect(() => { const onOpen = (e: Event) => { const d = (e as CustomEvent<OpenRequest>).detail; launchRef.current(d.app, true, d.path); }; window.addEventListener('ubuntu:open', onOpen); return () => window.removeEventListener('ubuntu:open', onOpen); }, []);
+  const titleSetters = useRef(new Map<number, (t: string) => void>());
+  const titleFor = (id: number) => { let f = titleSetters.current.get(id); if (!f) { f = (t: string) => setWindows(prev => prev.map(w => w.id === id && w.title !== t ? { ...w, title: t } : w)); titleSetters.current.set(id, f); } return f; };
+  const { ready } = useVfs();
+  const deskDir = ready ? fs.resolve(`${fs.HOME}/Desktop`) : undefined;
+  const deskItems = deskDir ? fs.children(deskDir.id).filter(n => !n.name.startsWith('.')).sort((a, b) => a.name.localeCompare(b.name)) : [];
+  const newDesktopFolder = () => { const d = fs.resolve(`${fs.HOME}/Desktop`); if (d) { fs.mkdir(d.id, fs.uniqueName(d.id, 'New Folder')); setNotice('Folder created on the Desktop'); } setContext(null); };
   useEffect(() => { const timer = setInterval(() => setClock(new Date()), 1000); return () => clearInterval(timer); }, []);
   useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(''), 4000); return () => clearTimeout(timer); }, [notice]);
   useEffect(() => {
