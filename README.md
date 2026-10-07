@@ -45,3 +45,10 @@ Wallpaper is original generated artwork interpreting the release's purple raccoo
 Persistent filesystem and full terminal arrive in Phase 2; settings and notifications in Phase 3; software management in Phase 4; login/lock/workspaces in Phase 5; media/utilities in Phase 6; standalone static GitHub Pages output and offline support in Phase 7.
 
 This intermediate repository retains the managed React/TanStack development setup for the live preview. It is **not yet the requested upload-only GitHub Pages distribution**. There are no desktop backend calls, authentication services, or database dependencies. The final static deployment must remove runtime server requirements and use subdirectory-safe paths. No service worker is registered in Phase 1.
+
+## Phase 2 — Filesystem, Files, Terminal
+- `src/lib/vfs.ts`: persistent simulated filesystem (saved in browser storage).
+- `src/lib/shell.ts`: bash-like commands (ls, cd, pwd, mkdir, touch, rm, cp, mv, cat, echo, tree, history, neofetch, …) that change real files.
+- Files app: tabs, back/forward, breadcrumbs, grid/list, sorting, hidden files, search, bookmarks, Trash/restore, copy/cut/paste, drag-and-drop, properties.
+- Text Editor opens and saves files; desktop icons mirror `~/Desktop`.
+- Test: `bunx vitest run`
