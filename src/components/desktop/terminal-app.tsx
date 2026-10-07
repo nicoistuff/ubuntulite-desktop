@@ -23,7 +23,7 @@ function colorize(text: string): ReactNode[] {
   });
 }
 
-export function TerminalApp({ path, setTitle }: { path?: string; setTitle: (t: string) => void }) {
+export function TerminalApp({ path, setTitle }: { path?: string | undefined; setTitle: (t: string) => void }) {
   const [lines, setLines] = useState<Line[]>([]);
   const [command, setCommand] = useState('');
   const [cwd, setCwd] = useState(path ?? HOME);

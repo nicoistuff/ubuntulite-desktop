@@ -5,7 +5,7 @@ import { EditorApp } from './editor-app';
 
 const noop = () => {};
 
-export function AppContent({ app, path, setTitle = noop }: { app: AppId; path?: string; setTitle?: (t: string) => void }) {
+export function AppContent({ app, path, setTitle = noop }: { app: AppId; path?: string | undefined; setTitle?: (t: string) => void }) {
   if (app === 'files') return <FilesApp path={path} setTitle={setTitle} />;
   if (app === 'terminal') return <TerminalApp path={path} setTitle={setTitle} />;
   if (app === 'editor') return <EditorApp path={path} setTitle={setTitle} />;

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import * as fs from '@/lib/vfs';
 
-export function EditorApp({ path, setTitle }: { path?: string; setTitle: (t: string) => void }) {
+export function EditorApp({ path, setTitle }: { path?: string | undefined; setTitle: (t: string) => void }) {
   const [fileId, setFileId] = useState<string | null>(null);
   const [text, setText] = useState('');
   const [saved, setSaved] = useState('');
