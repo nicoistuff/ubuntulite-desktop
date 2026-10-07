@@ -18,7 +18,7 @@ export function openNode(n: fs.FsNode) {
   else openWith({ app: 'editor', path: fs.pathOf(n.id) });
 }
 
-export function FilesApp({ path, setTitle }: { path?: string; setTitle: (t: string) => void }) {
+export function FilesApp({ path, setTitle }: { path?: string | undefined; setTitle: (t: string) => void }) {
   const { ready } = useVfs();
   const [tabs, setTabs] = useState<Tab[]>([{ history: [path ?? fs.HOME], pos: 0 }]);
   const [tabIndex, setTabIndex] = useState(0);

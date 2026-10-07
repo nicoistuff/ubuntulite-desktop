@@ -10,5 +10,5 @@ export function useVfs() {
   return { version, ready };
 }
 
-export type OpenRequest = { app: AppId; path?: string };
+export type OpenRequest = { app: AppId; path?: string | undefined };
 export const openWith = (detail: OpenRequest) => window.dispatchEvent(new CustomEvent<OpenRequest>('ubuntu:open', { detail }));

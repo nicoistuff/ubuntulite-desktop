@@ -23,16 +23,16 @@ function colorize(text: string): ReactNode[] {
   });
 }
 
-export function TerminalApp({ setTitle }: { setTitle: (t: string) => void }) {
+export function TerminalApp({ path, setTitle }: { path?: string | undefined; setTitle: (t: string) => void }) {
   const [lines, setLines] = useState<Line[]>([]);
   const [command, setCommand] = useState('');
-  const [cwd, setCwd] = useState(HOME);
+  const [cwd, setCwd] = useState(path ?? HOME);
   const [history, setHistory] = useState<string[]>([]);
   const [cursor, setCursor] = useState(-1);
   const end = useRef<HTMLFormElement>(null);
   useEffect(() => { try { setHistory(JSON.parse(localStorage.getItem(HISTORY_KEY) ?? '[]')); } catch { /* ignore corrupt history */ } }, []);
   useEffect(() => { setTitle(`ubuntu@ubuntu: ${displayPath(cwd)}`); }, [cwd, setTitle]);
-  useEffect(() => { end.current?.scrollIntoView({ block: 'end' }); }, [lines]);
+  useEffect(() => { end.current?.scrollIntoView?.({ block: 'end' }); }, [lines]);
   const prompt = `ubuntu@ubuntu:${displayPath(cwd)}$ `;
   const submit = () => {
     const nextHistory = command.trim() ? [...history, command].slice(-500) : history;
