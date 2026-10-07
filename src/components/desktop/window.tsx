@@ -3,7 +3,7 @@ import { Minus, Square, X, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { AppId } from './apps';
 
-export type DesktopWindow = { id: number; app: AppId; title: string; x: number; y: number; width: number; height: number; z: number; minimized: boolean; maximized: boolean; path?: string };
+export type DesktopWindow = { id: number; app: AppId; title: string; x: number; y: number; width: number; height: number; z: number; minimized: boolean; maximized: boolean; path?: string | undefined };
 export function Window({ win, active, update, focus, close, children }: {
   win: DesktopWindow; active: boolean; update: (patch: Partial<DesktopWindow>) => void; focus: () => void; close: () => void; children: ReactNode;
 }) {
