@@ -10,7 +10,8 @@ const emit = () => subs.forEach(f => f());
 /** Post a desktop notification. Shown as a banner unless Do Not Disturb is on; always kept in the notification list. */
 export function notify(app: string, title: string, body = '') {
   const id = Date.now() + Math.random();
-  const popup = !getSettings().dnd;
+  const s = getSettings();
+  const popup = !s.dnd && !s.mutedApps.includes(app);
   list = [{ id, app, title, body, time: Date.now(), popup }, ...list].slice(0, 50);
   if (popup) timers.set(id, setTimeout(() => hideBanner(id), 5000));
   emit();

@@ -1,9 +1,10 @@
+import { notify } from './notifications';
 // @ts-nocheck -- strict index typing pending Phase 2 cleanup
 // Bash-like interpreter operating on the simulated filesystem.
 import * as fs from './vfs';
 
 export type ShellResult = { output: string; cwd: string; clear?: boolean };
-const COMMANDS = ['cat', 'cd', 'clear', 'cp', 'date', 'echo', 'help', 'history', 'hostname', 'ls', 'mkdir', 'mv', 'neofetch', 'pwd', 'rm', 'rmdir', 'touch', 'tree', 'uname', 'whoami'];
+const COMMANDS = ['cat', 'cd', 'clear', 'cp', 'date', 'echo', 'help', 'history', 'hostname', 'ls', 'mkdir', 'mv', 'neofetch', 'notify-send', 'pwd', 'rm', 'rmdir', 'touch', 'tree', 'uname', 'whoami'];
 export const commandNames = COMMANDS;
 
 export function tokenize(line: string): string[] {
@@ -50,6 +51,7 @@ function exec(cmd: string, args: string[], cwd: string, history: string[]): Shel
   const { flags, rest } = split(args);
   switch (cmd) {
     case 'help': return out(`GNU bash, version 5.2 (simulated) — available commands:\n${COMMANDS.join('  ')}\nRedirection with > and >> is supported. Use ↑/↓ for history and Tab to complete.`);
+    case 'notify-send': { if (!args[0]) return out('Usage: notify-send SUMMARY [BODY]'); notify('Terminal', args[0], args.slice(1).join(' ')); return out(''); }
     case 'clear': return { output: '', cwd, clear: true };
     case 'echo': return out(args.join(' '));
     case 'whoami': return out('ubuntu');
