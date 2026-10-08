@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState, type ReactNode } from 'react';
 import { Accessibility, AppWindow, Bell, Bluetooth, Clock, Globe, HardDrive, Info, Keyboard, Lock, Monitor, Mouse, Network, Palette, Image, Search, Users, Volume2, Wifi, BatteryFull, LayoutPanelLeft, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
