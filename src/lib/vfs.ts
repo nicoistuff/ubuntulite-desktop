@@ -1,6 +1,5 @@
-// @ts-nocheck -- strict index typing pending
+// @ts-nocheck -- strict index typing pending Phase 2 cleanup
 import { getSettings } from './settings';
- Phase 2 cleanup
 // Simulated Ubuntu filesystem: a flat node table persisted to localStorage.
 export type FsNode = {
   id: string; name: string; type: 'dir' | 'file'; parent: string | null;
