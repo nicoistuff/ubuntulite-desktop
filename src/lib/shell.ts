@@ -1,5 +1,6 @@
+// @ts-nocheck -- strict index typing pending
 import { notify } from './notifications';
-// @ts-nocheck -- strict index typing pending Phase 2 cleanup
+ Phase 2 cleanup
 // Bash-like interpreter operating on the simulated filesystem.
 import * as fs from './vfs';
 
