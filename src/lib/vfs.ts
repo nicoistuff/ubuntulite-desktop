@@ -1,3 +1,4 @@
+import { getSettings } from './settings';
 // @ts-nocheck -- strict index typing pending Phase 2 cleanup
 // Simulated Ubuntu filesystem: a flat node table persisted to localStorage.
 export type FsNode = {
@@ -168,7 +169,7 @@ export function restore(id: string) {
 export function emptyTrash() { const t = resolve(TRASH); if (t) { children(t.id).forEach(c => removeTree(c.id)); commit(); } }
 export function toggleStar(id: string) { const n = node(id); if (n) { n.starred = !n.starred; commit(); } }
 export const starred = () => Object.values(load().nodes).filter(n => n.starred);
-export function touchRecent(id: string) { load(); state.recent = [id, ...state.recent.filter(r => r !== id)].slice(0, 20); commit(); }
+export function touchRecent(id: string) { if (!getSettings().recentFiles) return; load(); state.recent = [id, ...state.recent.filter(r => r !== id)].slice(0, 20); commit(); }
 export function clearRecent() { load(); state.recent = []; commit(); }
 export const recent = () => load().recent.map(node).filter((n): n is FsNode => !!n);
 export const bookmarks = () => load().bookmarks;

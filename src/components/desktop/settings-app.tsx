@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Accessibility, AppWindow, Bell, Bluetooth, Clock, Globe, HardDrive, Info, Keyboard, Lock, Monitor, Mouse, Network, Palette, Image, Search, Users, Volume2, Wifi, BatteryFull, LayoutPanelLeft, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ACCENTS, DEFAULTS, LANGUAGES, WALLPAPERS, localeOf, resetSettings, setSettings, useSettings, wallpaperCss, type Accent, type Settings } from '@/lib/settings';
+import { ACCENTS, LANGUAGES, WALLPAPERS, localeOf, resetSettings, setSettings, useSettings, wallpaperCss, type Accent, type Settings } from '@/lib/settings';
 import { notify } from '@/lib/notifications';
 import * as fs from '@/lib/vfs';
 import wallpaper from '@/assets/ubuntu-wallpaper.jpg';
@@ -185,4 +185,3 @@ function playTone(s: Settings) {
   o.start(); g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.5); o.stop(audio.currentTime + 0.5);
 }
 
-export { DEFAULTS };
