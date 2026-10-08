@@ -169,6 +169,7 @@ export function emptyTrash() { const t = resolve(TRASH); if (t) { children(t.id)
 export function toggleStar(id: string) { const n = node(id); if (n) { n.starred = !n.starred; commit(); } }
 export const starred = () => Object.values(load().nodes).filter(n => n.starred);
 export function touchRecent(id: string) { load(); state.recent = [id, ...state.recent.filter(r => r !== id)].slice(0, 20); commit(); }
+export function clearRecent() { load(); state.recent = []; commit(); }
 export const recent = () => load().recent.map(node).filter((n): n is FsNode => !!n);
 export const bookmarks = () => load().bookmarks;
 export function toggleBookmark(path: string) { load(); state.bookmarks = state.bookmarks.includes(path) ? state.bookmarks.filter(b => b !== path) : [...state.bookmarks, path]; commit(); }

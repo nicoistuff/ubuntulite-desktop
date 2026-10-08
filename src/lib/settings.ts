@@ -23,6 +23,7 @@ export type Settings = {
   largeText: boolean; reduceMotion: boolean; highContrast: boolean; scale: number;
   userName: string; deviceName: string; language: string; mouseSpeed: number; naturalScroll: boolean;
   keyRepeat: boolean; recentFiles: boolean; location: boolean;
+  wifiNetwork: string; lockDelay: number; mutedApps: string[]; pairedDevices: string[]; showBatteryPercent: boolean;
 };
 
 export const DEFAULTS: Settings = {
@@ -33,7 +34,11 @@ export const DEFAULTS: Settings = {
   largeText: false, reduceMotion: false, highContrast: false, scale: 100,
   userName: 'ubuntu', deviceName: 'ubuntu', language: 'English (United States)', mouseSpeed: 50, naturalScroll: false,
   keyRepeat: true, recentFiles: true, location: false,
+  wifiNetwork: 'Home-5G', lockDelay: 5, mutedApps: [], pairedDevices: [], showBatteryPercent: false,
 };
+
+export const LANGUAGES: Record<string, string> = { 'English (United States)': 'en-US', 'English (United Kingdom)': 'en-GB', 'Deutsch': 'de-DE', 'Français': 'fr-FR', 'Español': 'es-ES', 'Italiano': 'it-IT', 'Português (Brasil)': 'pt-BR' };
+export const localeOf = (s: Settings) => LANGUAGES[s.language] ?? 'en-US';
 
 const KEY = 'ubuntu-settings-v1';
 let state: Settings = DEFAULTS;
