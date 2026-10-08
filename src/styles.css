@@ -215,3 +215,63 @@ input[type=range] { accent-color: var(--primary); width: 100%; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 
 .app-window.minimized, .overview-shown .app-window { display: none; }
+
+/* Dark theme tokens */
+.ubuntu-desktop.theme-dark {
+  --background: oklch(0.24 0 0);
+  --foreground: oklch(0.96 0 0);
+  --border: oklch(0.35 0 0);
+  --secondary: oklch(0.28 0 0);
+  --accent: oklch(0.32 0 0);
+  --muted-foreground: oklch(0.72 0 0);
+  --window-shadow: 0 16px 52px oklch(0 0 0 / 55%), 0 2px 8px oklch(0 0 0 / 30%);
+}
+.ubuntu-desktop.theme-dark .app-window {
+  background: oklch(0.22 0 0);
+  color: oklch(0.96 0 0);
+}
+.ubuntu-desktop.theme-dark .window-header {
+  background: oklch(0.18 0 0);
+}
+
+/* Dock auto-hide */
+.dock-autohide .dock {
+  transform: translateX(calc(-100% + 2px));
+  transition: transform 0.2s cubic-bezier(0.2, 0, 1);
+}
+.dock-autohide .dock:hover {
+  transform: translateX(0);
+}
+
+/* Notification banners */
+.notice-tray {
+  position: absolute;
+  top: 42px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10001;
+  pointer-events: none;
+}
+.notice-banner {
+  pointer-events: auto;
+  min-width: 320px;
+  max-width: 440px;
+  background: var(--shell);
+  color: var(--shell-text);
+  border: 1px solid var(--shell-border);
+  border-radius: 9px;
+  padding: 10px 14px;
+  box-shadow: var(--menu-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  animation: notice-in 0.18s ease-out;
+}
+@keyframes notice-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
