@@ -27,7 +27,7 @@ export function Desktop() {
   const [popover, setPopover] = useState<'calendar' | 'system' | null>(null);
   const [powerMenu, setPowerMenu] = useState(false);
   const [context, setContext] = useState<{ x: number; y: number } | null>(null);
-  const [clock, setClock] = useState(new Date());
+  const [clock, setClock] = useState<Date | null>(null); // null until mounted: keeps SSR and first client render identical
   const [monthOffset, setMonthOffset] = useState(0);
   const [session, setSession] = useState<SessionMode>('active');
   const lastActivity = useRef(Date.now());
@@ -48,7 +48,7 @@ export function Desktop() {
   const deskDir = ready ? fs.resolve(`${fs.HOME}/Desktop`) : undefined;
   const deskItems = deskDir ? fs.children(deskDir.id).filter(n => !n.name.startsWith('.')).sort((a, b) => a.name.localeCompare(b.name)) : [];
   const newDesktopFolder = () => { const d = fs.resolve(`${fs.HOME}/Desktop`); if (d) { const n = fs.mkdir(d.id, fs.uniqueName(d.id, 'New Folder')); notify('Files', 'Folder created', `“${n.name}” was added to the Desktop.`); } setContext(null); };
-  useEffect(() => { const timer = setInterval(() => setClock(new Date()), 1000); return () => clearInterval(timer); }, []);
+  useEffect(() => { setClock(new Date()); const timer = setInterval(() => setClock(new Date()), 1000); return () => clearInterval(timer); }, []);
   // Automatic screen lock after idle time (Privacy & Security setting).
   useEffect(() => {
     const touch = () => { lastActivity.current = Date.now(); };
