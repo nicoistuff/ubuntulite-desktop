@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { BatteryFull, Bell, BellOff, Bluetooth, ChevronDown, ChevronLeft, ChevronRight, File, Folder, Gauge, Grid3X3, Home, Lock, LogOut, Moon, Plane, Power, RotateCcw, Search, Settings, Sun, Trash2, Volume2, VolumeX, Wifi, WifiOff, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { BatteryFull, Bell, BellOff, Bluetooth, Calculator, ChevronDown, ChevronLeft, ChevronRight, File, Folder, Gauge, Grid3X3, Home, Lock, LogOut, Moon, Plane, Power, RotateCcw, Search, Settings, Sliders, Sun, Trash2, Volume2, VolumeX, Wifi, WifiOff, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import wallpaper from '@/assets/ubuntu-wallpaper.jpg';
 import * as fs from '@/lib/vfs';
@@ -15,6 +15,29 @@ import { openNode } from './files-app';
 import { useVfs, type OpenRequest } from './use-vfs';
 import { SessionScreen, type SessionMode } from './session-screen';
 
+const TOTAL_WORKSPACES = 4;
+
+const SETTINGS_SEARCH_INDEX = [
+  { id: 'wifi', name: 'Wi-Fi & Wireless', keywords: 'internet network connection router' },
+  { id: 'network', name: 'Wired Network', keywords: 'ethernet lan ip address connection' },
+  { id: 'bluetooth', name: 'Bluetooth', keywords: 'wireless devices pair connect headphones mouse' },
+  { id: 'appearance', name: 'Appearance & Themes', keywords: 'dark mode light theme accent color style yaru' },
+  { id: 'wallpaper', name: 'Background Wallpaper', keywords: 'desktop image picture photo background' },
+  { id: 'displays', name: 'Displays & Resolution', keywords: 'monitor screen night light scale resolution' },
+  { id: 'sound', name: 'Sound & Volume', keywords: 'audio speaker volume microphone output' },
+  { id: 'power', name: 'Power & Battery', keywords: 'performance battery power saver sleep suspend' },
+  { id: 'notifications', name: 'Notifications', keywords: 'alerts banners do not disturb dnd popups' },
+  { id: 'apps', name: 'Default Applications', keywords: 'default browser mail text music player permissions' },
+  { id: 'privacy', name: 'Privacy & Screen Lock', keywords: 'security auto lock idle password screen' },
+  { id: 'keyboard', name: 'Keyboard Shortcuts', keywords: 'typing shortcuts hotkeys layout input' },
+  { id: 'mouse', name: 'Mouse & Touchpad', keywords: 'cursor pointer speed natural scrolling click' },
+  { id: 'accessibility', name: 'Accessibility', keywords: 'large text high contrast zoom reduce motion' },
+  { id: 'users', name: 'User Accounts', keywords: 'profile avatar password username account' },
+  { id: 'datetime', name: 'Date & Time', keywords: 'clock time zone 24 hour calendar seconds' },
+  { id: 'storage', name: 'Storage & Disk Reset', keywords: 'disk free space usage clean reset filesystem' },
+  { id: 'about', name: 'About System', keywords: 'ubuntu version specifications device memory ram cpu' },
+];
+
 const ago = (t: number, now: number) => { 
   const m = Math.floor((now - t) / 60000); 
   return m < 1 ? 'Just now' : m < 60 ? `${m} min ago` : `${Math.floor(m / 60)} h ago`; 
@@ -27,8 +50,9 @@ export function Desktop() {
   const currentApps = getFullAppList(installed);
 
   const locale = localeOf(s);
+  const [currentWorkspace, setCurrentWorkspace] = useState(0);
   const [windows, setWindows] = useState<DesktopWindow[]>([
-    { id: 1, app: 'files', title: 'Home', x: 180, y: 125, width: 860, height: 530, z: 2, minimized: false, maximized: false }
+    { id: 1, app: 'files', title: 'Home', x: 180, y: 125, width: 860, height: 530, z: 2, minimized: false, maximized: false, workspace: 0 }
   ]);
   const [active, setActive] = useState(1);
   const [overview, setOverview] = useState(false);
@@ -51,7 +75,13 @@ export function Desktop() {
 
   const focus = (id: number) => { 
     setActive(id); 
-    setWindows(prev => prev.map(w => w.id === id ? { ...w, z: Math.max(...prev.map(p => p.z), 1) + 1, minimized: false } : w)); 
+    setWindows(prev => {
+      const target = prev.find(w => w.id === id);
+      if (target && target.workspace !== undefined && target.workspace !== currentWorkspace) {
+        setCurrentWorkspace(target.workspace);
+      }
+      return prev.map(w => w.id === id ? { ...w, z: Math.max(...prev.map(p => p.z), 1) + 1, minimized: false } : w);
+    }); 
   };
 
   const launch = (app: AppId, newWindow = false, path?: string) => {
@@ -75,7 +105,8 @@ export function Desktop() {
         height: Math.min(app === 'settings' ? 600 : 530, window.innerHeight - 130), 
         z: Math.max(...prev.map(w => w.z), 1) + 1, 
         minimized: false, 
-        maximized: false 
+        maximized: false,
+        workspace: currentWorkspace
       }]); 
       setActive(id); 
     }
@@ -159,23 +190,99 @@ export function Desktop() {
     return () => el.removeEventListener('wheel', onWheel);
   }, [s.naturalScroll]);
 
+  // Window Snapping Helper
+  const snapWindow = useCallback((side: 'left' | 'right' | 'max' | 'restore') => {
+    setWindows(prev => prev.map(w => {
+      if (w.id !== active) return w;
+      const topOffset = 34;
+      const leftOffset = 68;
+      const availWidth = window.innerWidth - leftOffset;
+      const availHeight = window.innerHeight - topOffset;
+      if (side === 'max') return { ...w, maximized: true };
+      if (side === 'restore') return { ...w, maximized: false };
+      if (side === 'left') return { ...w, maximized: false, x: leftOffset, y: topOffset, width: availWidth / 2, height: availHeight };
+      if (side === 'right') return { ...w, maximized: false, x: leftOffset + availWidth / 2, y: topOffset, width: availWidth / 2, height: availHeight };
+      return w;
+    }));
+  }, [active]);
+
+  // Keyboard Shortcuts (Super+L, Super+S, Workspace switching, Snapping)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (session !== 'active') return;
       if (e.key === 'Escape') closeMenus();
-      if (e.key === 'Meta' || (e.altKey && e.key === 'F1')) { e.preventDefault(); setOverview(v => !v); }
-      if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 't') { e.preventDefault(); launch('terminal', true); }
-      if (e.altKey && e.key === 'F4') { e.preventDefault(); setWindows(prev => prev.filter(w => w.id !== active)); }
+
+      // Super / Alt+F1: Overview
+      if (e.key === 'Meta' || (e.altKey && e.key === 'F1')) { 
+        e.preventDefault(); 
+        setOverview(v => !v); 
+      }
+
+      // Super + L: Lock Screen
+      if (e.metaKey && e.key.toLowerCase() === 'l') {
+        e.preventDefault();
+        setSession('locked');
+      }
+
+      // Super + S: Search
+      if (e.metaKey && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        setOverview(true);
+      }
+
+      // Terminal: Ctrl + Alt + T
+      if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 't') { 
+        e.preventDefault(); 
+        launch('terminal', true); 
+      }
+
+      // Close active window: Alt + F4
+      if (e.altKey && e.key === 'F4') { 
+        e.preventDefault(); 
+        setWindows(prev => prev.filter(w => w.id !== active)); 
+      }
+
+      // Cycle windows: Alt + Tab
       if (e.altKey && e.key === 'Tab') { 
         e.preventDefault(); 
-        const ordered = [...windows].sort((a, b) => b.z - a.z); 
+        const currentWsWindows = windows.filter(w => (w.workspace ?? 0) === currentWorkspace);
+        const ordered = [...currentWsWindows].sort((a, b) => b.z - a.z); 
         const next = ordered.length > 1 ? ordered[1] : ordered[0]; 
         if (next) focus(next.id); 
       }
+
+      // Workspace switching: Ctrl+Alt+ArrowRight / Super+PageDown
+      if ((e.ctrlKey && e.altKey && e.key === 'ArrowRight') || (e.metaKey && e.key === 'PageDown')) {
+        e.preventDefault();
+        setCurrentWorkspace(ws => Math.min(TOTAL_WORKSPACES - 1, ws + 1));
+      }
+      // Workspace switching: Ctrl+Alt+ArrowLeft / Super+PageUp
+      if ((e.ctrlKey && e.altKey && e.key === 'ArrowLeft') || (e.metaKey && e.key === 'PageUp')) {
+        e.preventDefault();
+        setCurrentWorkspace(ws => Math.max(0, ws - 1));
+      }
+
+      // Move active window to next/prev workspace: Super+Shift+PageDown / PageUp
+      if (e.metaKey && e.shiftKey && e.key === 'PageDown') {
+        e.preventDefault();
+        setWindows(prev => prev.map(w => w.id === active ? { ...w, workspace: Math.min(TOTAL_WORKSPACES - 1, (w.workspace ?? 0) + 1) } : w));
+        setCurrentWorkspace(ws => Math.min(TOTAL_WORKSPACES - 1, ws + 1));
+      }
+      if (e.metaKey && e.shiftKey && e.key === 'PageUp') {
+        e.preventDefault();
+        setWindows(prev => prev.map(w => w.id === active ? { ...w, workspace: Math.max(0, (w.workspace ?? 0) - 1) } : w));
+        setCurrentWorkspace(ws => Math.max(0, ws - 1));
+      }
+
+      // Window snapping with Super + Arrows
+      if (e.metaKey && e.key === 'ArrowUp') { e.preventDefault(); snapWindow('max'); }
+      if (e.metaKey && e.key === 'ArrowDown') { e.preventDefault(); snapWindow('restore'); }
+      if (e.metaKey && e.key === 'ArrowLeft') { e.preventDefault(); snapWindow('left'); }
+      if (e.metaKey && e.key === 'ArrowRight') { e.preventDefault(); snapWindow('right'); }
     };
     document.addEventListener('keydown', onKey); 
     return () => document.removeEventListener('keydown', onKey);
-  });
+  }, [active, currentWorkspace, session, snapWindow, windows]);
 
   const sessionAction = (mode: SessionMode) => { 
     closeMenus(); 
@@ -206,11 +313,44 @@ export function Desktop() {
   const banners = notices.filter(n => n.popup).slice(0, 3);
   const activeApp = windows.find(w => w.id === active && !w.minimized)?.app;
 
-  // Dock items: pinned favorites plus any open running app that isn't pinned
+  // Dock items: pinned favorites plus any open running app
   const runningExtraApps = currentApps.filter(a => !builtInApps.some(b => b.id === a.id) && windows.some(w => w.app === a.id));
   const dockApps = [...builtInApps, ...runningExtraApps];
 
-  // Dynamic overview categories from installed apps
+  // Global Unified Search Calculations
+  const trimmedQuery = query.trim().toLowerCase();
+
+  const searchApps = useMemo(() => {
+    if (!trimmedQuery) return [];
+    return currentApps.filter(a => a.name.toLowerCase().includes(trimmedQuery) || a.category.toLowerCase().includes(trimmedQuery));
+  }, [currentApps, trimmedQuery]);
+
+  const searchSettings = useMemo(() => {
+    if (!trimmedQuery) return [];
+    return SETTINGS_SEARCH_INDEX.filter(item => 
+      item.name.toLowerCase().includes(trimmedQuery) || 
+      item.keywords.toLowerCase().includes(trimmedQuery)
+    );
+  }, [trimmedQuery]);
+
+  const searchFiles = useMemo(() => {
+    if (!trimmedQuery || !ready) return [];
+    return fs.search(trimmedQuery).slice(0, 6);
+  }, [trimmedQuery, ready]);
+
+  const mathResult = useMemo(() => {
+    if (!trimmedQuery || !/^[0-9+\-*/().\s^%]+$/.test(trimmedQuery) || !/[0-9]/.test(trimmedQuery)) return null;
+    try {
+      const sanitized = trimmedQuery.replace(/\^/g, '**');
+      const val = Function(`'use strict'; return (${sanitized})`)();
+      if (typeof val === 'number' && !Number.isNaN(val) && Number.isFinite(val)) {
+        return val.toLocaleString();
+      }
+    } catch {}
+    return null;
+  }, [trimmedQuery]);
+
+  // Available categories for launcher
   const availableCategories = ['All', ...Array.from(new Set(currentApps.map(a => a.category)))];
 
   const tiles = [
@@ -231,16 +371,38 @@ export function Desktop() {
   }}>
     {wp ? <div className="desktop-wallpaper" style={{ background: wp }} /> : <img className="desktop-wallpaper" src={wallpaper} width={1920} height={1088} alt="Original purple Resolute Raccoon desktop wallpaper" />}
     <div className="desktop-surface" onClick={() => { setPopover(null); setContext(null); }} />
+
+    {/* Top Panel with Dynamic Workspace Switcher Pill */}
     <header className="top-panel">
       <div className="panel-left">
-        <Button variant="panel" className="activities-button" aria-label="Activities overview" onClick={() => { setOverview(!overview); setPopover(null); }}>
-          <span className="workspace-mark"><i /><i /></span>
+        <Button 
+          variant="panel" 
+          className="activities-button" 
+          aria-label="Activities overview" 
+          onClick={() => { setOverview(!overview); setPopover(null); }}
+          onWheel={e => {
+            e.preventDefault();
+            if (e.deltaY > 0) setCurrentWorkspace(ws => Math.min(TOTAL_WORKSPACES - 1, ws + 1));
+            else setCurrentWorkspace(ws => Math.max(0, ws - 1));
+          }}
+        >
+          <span className="workspace-mark" title={`Workspace ${currentWorkspace + 1}`}>
+            {Array.from({ length: TOTAL_WORKSPACES }).map((_, i) => (
+              <i 
+                key={i} 
+                className={currentWorkspace === i ? 'active' : ''} 
+                onClick={e => { e.stopPropagation(); setCurrentWorkspace(i); }} 
+              />
+            ))}
+          </span>
         </Button>
         <span className="panel-app-name">{overview ? 'Activities' : currentApps.find(a => a.id === activeApp)?.name ?? 'Ubuntu Desktop'}</span>
       </div>
+
       <Button variant="panel" className="clock-button" onClick={() => { setPopover(popover === 'calendar' ? null : 'calendar'); setOverview(false); }}>
         {dateStr}<span>{timeStr}</span>{s.dnd && <BellOff size={13} />}{!s.dnd && notices.length > 0 && <i className="clock-dot" />}
       </Button>
+
       <Button variant="panel" className="system-button" aria-label="System menu" onClick={() => { setPopover(popover === 'system' ? null : 'system'); setOverview(false); setPowerMenu(false); }}>
         {s.airplane ? <Plane /> : wifiOn ? <Wifi /> : <WifiOff />}{btOn && <Bluetooth />}{s.muted || s.volume === 0 ? <VolumeX /> : <Volume2 />}<BatteryFull />{s.showBatteryPercent && <small>100%</small>}<ChevronDown />
       </Button>
@@ -259,7 +421,7 @@ export function Desktop() {
           onClick={e => launch(app.id, e.shiftKey)}
         >
           <AppIcon app={app.id} />
-          {windows.some(w => w.app === app.id && w.id === active && !w.minimized) && <span className="dock-active" />}
+          {windows.some(w => w.app === app.id && w.id === active && !w.minimized && (w.workspace ?? 0) === currentWorkspace) && <span className="dock-active" />}
         </Button>
       ))}
       <div className="dock-divider" />
@@ -286,47 +448,170 @@ export function Desktop() {
       ))}
     </div>
 
-    {windows.map(win => (
-      <Window key={win.id} win={win} active={active === win.id} focus={() => focus(win.id)} update={patch => setWindows(prev => prev.map(w => w.id === win.id ? { ...w, ...patch } : w))} close={() => setWindows(prev => prev.filter(w => w.id !== win.id))}>
+    {/* Windows on active workspace */}
+    {windows.filter(win => (win.workspace ?? 0) === currentWorkspace).map(win => (
+      <Window 
+        key={win.id} 
+        win={win} 
+        active={active === win.id} 
+        focus={() => focus(win.id)} 
+        update={patch => setWindows(prev => prev.map(w => w.id === win.id ? { ...w, ...patch } : w))} 
+        close={() => setWindows(prev => prev.filter(w => w.id !== win.id))}
+      >
         <AppContent app={win.app} path={win.path} setTitle={titleFor(win.id)} />
       </Window>
     ))}
 
+    {/* Activities Overview with Workspaces Carousel & Unified Search */}
     {overview && (
       <section className="overview" aria-label="Application overview">
         <div className="overview-search">
           <Search size={19} />
-          <input autoFocus aria-label="Search applications" placeholder="Type to search" value={query} onChange={e => setQuery(e.target.value)} />
+          <input 
+            autoFocus 
+            aria-label="Search applications, files, and settings" 
+            placeholder="Type to search apps, settings, files, math…" 
+            value={query} 
+            onChange={e => setQuery(e.target.value)} 
+          />
           {query && <Button variant="desktop" size="icon" aria-label="Clear search" onClick={() => setQuery('')}><X /></Button>}
         </div>
-        <div className="overview-workspaces">
-          <div className="workspace-preview" style={wpStyle}>
-            {windows.filter(w => !w.minimized).slice(0, 3).map(w => (
-              <Button variant="desktop" key={w.id} className="preview-window" onClick={() => { focus(w.id); setOverview(false); }}>
-                <AppIcon app={w.app} small />{w.title}
-              </Button>
-            ))}
-          </div>
+
+        {/* Workspaces Horizontal Carousel */}
+        <div className="workspaces-carousel" aria-label="Virtual workspaces">
+          {Array.from({ length: TOTAL_WORKSPACES }).map((_, wsIdx) => {
+            const wsWindows = windows.filter(w => (w.workspace ?? 0) === wsIdx && !w.minimized);
+            const isCurrent = currentWorkspace === wsIdx;
+            return (
+              <div 
+                key={wsIdx} 
+                className={`workspace-card ${isCurrent ? 'active' : ''}`}
+                style={wpStyle}
+                onClick={() => { setCurrentWorkspace(wsIdx); }}
+              >
+                <div className="workspace-header">Workspace {wsIdx + 1}</div>
+                <div className="workspace-thumbnail-area">
+                  {wsWindows.map(w => (
+                    <Button 
+                      variant="desktop" 
+                      key={w.id} 
+                      className="preview-window" 
+                      onClick={e => { e.stopPropagation(); setCurrentWorkspace(wsIdx); focus(w.id); setOverview(false); }}
+                    >
+                      <AppIcon app={w.app} small />{w.title}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
-        <div className="launcher-categories">
-          {availableCategories.map(c => (
-            <Button variant="desktop" key={c} className={category === c ? 'selected' : ''} onClick={() => setCategory(c)}>
-              {c}
-            </Button>
-          ))}
-        </div>
-        <div className="application-grid">
-          {currentApps.filter(a => a.name.toLowerCase().includes(query.toLowerCase()) && (category === 'All' || a.category === category)).map(app => (
-            <Button variant="desktop" key={app.id} className="application-tile" onClick={() => launch(app.id)}>
-              <AppIcon app={app.id} />
-              <span>{app.name}</span>
-              {windows.some(w => w.app === app.id) && <i />}
-            </Button>
-          ))}
-        </div>
-        {currentApps.filter(a => a.name.toLowerCase().includes(query.toLowerCase()) && (category === 'All' || a.category === category)).length === 0 && (
-          <p className="no-results">No applications found</p>
+
+        {/* Default Category View when not searching */}
+        {!query && (
+          <>
+            <div className="launcher-categories">
+              {availableCategories.map(c => (
+                <Button variant="desktop" key={c} className={category === c ? 'selected' : ''} onClick={() => setCategory(c)}>
+                  {c}
+                </Button>
+              ))}
+            </div>
+            <div className="application-grid">
+              {currentApps.filter(a => category === 'All' || a.category === category).map(app => (
+                <Button variant="desktop" key={app.id} className="application-tile" onClick={() => launch(app.id)}>
+                  <AppIcon app={app.id} />
+                  <span>{app.name}</span>
+                  {windows.some(w => w.app === app.id) && <i />}
+                </Button>
+              ))}
+            </div>
+          </>
         )}
+
+        {/* Unified Search Results */}
+        {query && (
+          <div className="unified-search-results">
+            {/* Math / Calculator Result */}
+            {mathResult !== null && (
+              <div className="search-section">
+                <span className="search-section-title">Calculator</span>
+                <Button variant="desktop" className="search-result-row calc-result" onClick={() => launch('calculator')}>
+                  <Calculator size={22} className="search-icon" />
+                  <div className="search-result-meta">
+                    <strong>{mathResult}</strong>
+                    <small>{query} = {mathResult}</small>
+                  </div>
+                </Button>
+              </div>
+            )}
+
+            {/* Applications Matches */}
+            {searchApps.length > 0 && (
+              <div className="search-section">
+                <span className="search-section-title">Applications</span>
+                <div className="search-grid">
+                  {searchApps.map(app => (
+                    <Button variant="desktop" key={app.id} className="application-tile" onClick={() => launch(app.id)}>
+                      <AppIcon app={app.id} />
+                      <span>{app.name}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Settings Matches */}
+            {searchSettings.length > 0 && (
+              <div className="search-section">
+                <span className="search-section-title">Settings</span>
+                <div className="search-list">
+                  {searchSettings.map(item => (
+                    <Button variant="desktop" key={item.id} className="search-result-row" onClick={() => launch('settings', false, item.id)}>
+                      <Sliders size={20} className="search-icon" />
+                      <div className="search-result-meta">
+                        <strong>{item.name}</strong>
+                        <small>Settings › {item.name}</small>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Files Matches */}
+            {searchFiles.length > 0 && (
+              <div className="search-section">
+                <span className="search-section-title">Files & Folders</span>
+                <div className="search-list">
+                  {searchFiles.map(node => (
+                    <Button 
+                      variant="desktop" 
+                      key={node.id} 
+                      className="search-result-row" 
+                      onClick={() => {
+                        if (node.type === 'dir') launch('files', true, fs.pathOf(node.id));
+                        else launch('editor', true, fs.pathOf(node.id));
+                      }}
+                    >
+                      {node.type === 'dir' ? <Folder size={20} className="search-icon" /> : <File size={20} className="search-icon" />}
+                      <div className="search-result-meta">
+                        <strong>{node.name}</strong>
+                        <small>{fs.pathOf(node.id)}</small>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No Results */}
+            {mathResult === null && searchApps.length === 0 && searchSettings.length === 0 && searchFiles.length === 0 && (
+              <p className="no-results">No matches found for “{query}”</p>
+            )}
+          </div>
+        )}
+
         <div className="overview-page-dot" />
       </section>
     )}
