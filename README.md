@@ -52,3 +52,12 @@ This intermediate repository retains the managed React/TanStack development setu
 - Files app: tabs, back/forward, breadcrumbs, grid/list, sorting, hidden files, search, bookmarks, Trash/restore, copy/cut/paste, drag-and-drop, properties.
 - Text Editor opens and saves files; desktop icons mirror `~/Desktop`.
 - Test: `bunx vitest run`
+
+## Phase 3 — Settings, Themes, Notifications
+- `src/lib/settings.ts`: persistent settings store (theme, accent, wallpaper, dock, Wi-Fi, Bluetooth, night light, DND, lock delay, language, accessibility) saved in browser storage.
+- `src/lib/notifications.ts`: notification center with banners, auto-dismiss, Do Not Disturb and per-app mute.
+- `src/components/desktop/settings-app.tsx`: full Settings app with 20 panels (Wi-Fi, Bluetooth, Displays, Sound, Appearance, Wallpaper, Notifications, Privacy, Accessibility, Users, Region & Language, Date & Time, Storage with Reset, About, …) — every control changes the real desktop.
+- `src/components/desktop/session-screen.tsx`: lock, login, power-off and boot screens (simulated auth).
+- Top panel quick settings: Wi-Fi, Bluetooth, Power Mode, Night Light, Dark Style, Airplane Mode, DND, volume/brightness sliders, power menu (Restart / Power Off / Log Out).
+- Dark theme, accent colors and wallpapers (original art + gradients) apply live; `notify-send` works from the terminal.
+- Test: `bunx vitest run` (11 tests)

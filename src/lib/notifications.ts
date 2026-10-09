@@ -20,6 +20,7 @@ export function notify(app: string, title: string, body = '') {
 export function hideBanner(id: number) { const t = timers.get(id); if (t) clearTimeout(t); timers.delete(id); list = list.map(n => n.id === id ? { ...n, popup: false } : n); emit(); }
 export function dismiss(id: number) { hideBanner(id); list = list.filter(n => n.id !== id); emit(); }
 export function clearAll() { timers.forEach(clearTimeout); timers.clear(); list = []; emit(); }
+export const listNotifications = () => list;
 const subscribe = (f: () => void) => { subs.add(f); return () => { subs.delete(f); }; };
 const snap = () => list;
 const empty: Notice[] = [];
