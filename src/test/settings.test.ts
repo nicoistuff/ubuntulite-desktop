@@ -19,14 +19,14 @@ describe('settings store', () => {
   });
 
   it('offers accents and wallpapers with valid css', () => {
-    expect(ACCENTS.length).toBeGreaterThanOrEqual(8);
+    expect(Object.keys(ACCENTS).length).toBeGreaterThanOrEqual(8);
     expect(WALLPAPERS.length).toBeGreaterThanOrEqual(5);
-    expect(wallpaperCss(WALLPAPERS[0].id)).toBeTruthy();
+    expect(wallpaperCss(getSettings())).toBeTruthy();
   });
 
   it('maps languages to locales', () => {
-    expect(localeOf('English (UK)')).toBe('en-GB');
-    expect(localeOf('Deutsch')).toBe('de-DE');
+    expect(localeOf({ ...getSettings(), language: 'English (United Kingdom)' })).toBe('en-GB');
+    expect(localeOf({ ...getSettings(), language: 'Deutsch' })).toBe('de-DE');
   });
 });
 
@@ -42,17 +42,19 @@ describe('notifications', () => {
 
   it('suppresses popups when Do Not Disturb is on', () => {
     setSettings({ dnd: true });
-    const quiet = listNotifications().find(n => n.id === notify('Terminal', 'Quiet'));
-    expect(quiet.popup).toBe(false);
+    const quietId = notify('Terminal', 'Quiet');
+    expect(listNotifications().find(n => n.id === quietId).popup).toBe(false);
     setSettings({ dnd: false });
-    const loud = listNotifications().find(n => n.id === notify('Terminal', 'Loud'));
-    expect(loud.popup).toBe(true);
+    const loudId = notify('Terminal', 'Loud');
+    expect(listNotifications().find(n => n.id === loudId).popup).toBe(true);
   });
 
   it('suppresses popups for muted apps', () => {
     setSettings({ mutedApps: ['Terminal'] });
-    expect(listNotifications().find(n => n.id === notify('Terminal', 'Muted')).popup).toBe(false);
-    expect(listNotifications().find(n => n.id === notify('Files', 'Not muted')).popup).toBe(true);
+    const mutedId = notify('Terminal', 'Muted');
+    const otherId = notify('Files', 'Not muted');
+    expect(listNotifications().find(n => n.id === mutedId).popup).toBe(false);
+    expect(listNotifications().find(n => n.id === otherId).popup).toBe(true);
   });
 
   it('clearAll empties the list', () => {
