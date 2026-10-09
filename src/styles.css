@@ -801,3 +801,62 @@ input[type=range] { accent-color: var(--primary); width: 100%; }
 }
 .updates-check { color: #16a34a; }
 .updates-empty p { opacity: 0.65; font-size: 13px; margin: 0; }
+/* ==========================================================================
+   Ubuntu 26.04 Calculator
+   ========================================================================== */
+.calculator-app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: var(--bg);
+  padding: 16px;
+  gap: 14px;
+  user-select: none;
+}
+.calc-screen {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  min-height: 80px;
+}
+.calc-equation {
+  font-size: 13px;
+  opacity: 0.6;
+  min-height: 18px;
+}
+.calc-value {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--text);
+  font-family: 'Ubuntu Mono', monospace;
+}
+.calc-pad {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  flex: 1;
+}
+.calc-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+.calc-btn:hover { background: var(--hover); }
+.calc-btn.btn-op { color: var(--primary); font-size: 20px; font-weight: 600; }
+.calc-btn.btn-equals { background: var(--primary); color: #fff; grid-row: span 2; border: none; font-size: 22px; }
+.calc-btn.btn-zero { grid-column: span 2; }
+.calc-btn.btn-func { opacity: 0.8; }
