@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getSettings, setSettings, resetSettings, DEFAULTS, ACCENTS, WALLPAPERS, wallpaperCss, localeOf } from '../lib/settings';
-import { notify, dismiss, clearAll, useNotifications, _store } from '../lib/notifications';
+import { notify, dismiss, clearAll, listNotifications } from '../lib/notifications';
 
 describe('settings store', () => {
   beforeEach(() => { localStorage.clear(); resetSettings(); });
@@ -34,30 +34,30 @@ describe('notifications', () => {
   beforeEach(() => { localStorage.clear(); resetSettings(); clearAll(); });
 
   it('creates and dismisses notifications', () => {
-    const n = notify('Terminal', 'Hello', 'World');
-    expect(_store.list().some(x => x.id === n.id)).toBe(true);
-    dismiss(n.id);
-    expect(_store.list().some(x => x.id === n.id)).toBe(false);
+    const id = notify('Terminal', 'Hello', 'World');
+    expect(listNotifications().some(n => n.id === id)).toBe(true);
+    dismiss(id);
+    expect(listNotifications().some(n => n.id === id)).toBe(false);
   });
 
   it('suppresses popups when Do Not Disturb is on', () => {
     setSettings({ dnd: true });
-    const n = notify('Terminal', 'Quiet');
-    expect(n.popup).toBe(false);
+    const quiet = listNotifications().find(n => n.id === notify('Terminal', 'Quiet'));
+    expect(quiet.popup).toBe(false);
     setSettings({ dnd: false });
-    const m = notify('Terminal', 'Loud');
-    expect(m.popup).toBe(true);
+    const loud = listNotifications().find(n => n.id === notify('Terminal', 'Loud'));
+    expect(loud.popup).toBe(true);
   });
 
   it('suppresses popups for muted apps', () => {
     setSettings({ mutedApps: ['Terminal'] });
-    expect(notify('Terminal', 'Muted').popup).toBe(false);
-    expect(notify('Files', 'Not muted').popup).toBe(true);
+    expect(listNotifications().find(n => n.id === notify('Terminal', 'Muted')).popup).toBe(false);
+    expect(listNotifications().find(n => n.id === notify('Files', 'Not muted')).popup).toBe(true);
   });
 
   it('clearAll empties the list', () => {
     notify('A', '1'); notify('B', '2');
     clearAll();
-    expect(_store.list()).toHaveLength(0);
+    expect(listNotifications()).toHaveLength(0);
   });
 });
