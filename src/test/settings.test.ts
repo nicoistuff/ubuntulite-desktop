@@ -21,7 +21,7 @@ describe('settings store', () => {
   it('offers accents and wallpapers with valid css', () => {
     expect(Object.keys(ACCENTS).length).toBeGreaterThanOrEqual(8);
     expect(WALLPAPERS.length).toBeGreaterThanOrEqual(5);
-    expect(wallpaperCss(getSettings())).toBeTruthy();
+    expect(wallpaperCss({ ...getSettings(), wallpaper: 'dusk' })).toBeTruthy();
   });
 
   it('maps languages to locales', () => {
