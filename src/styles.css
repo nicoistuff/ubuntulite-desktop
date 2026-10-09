@@ -1099,3 +1099,48 @@ input[type=range] { accent-color: var(--primary); width: 100%; }
   color: var(--primary, #e95420);
   flex-shrink: 0;
 }
+/* Alt+Tab Switcher HUD */
+.alt-tab-switcher {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(30, 30, 30, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  z-index: 99999;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+}
+.alt-tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  color: #fff;
+  cursor: pointer;
+  min-width: 96px;
+  transition: all 0.15s ease;
+}
+.alt-tab-item span {
+  font-size: 12px;
+  font-weight: 500;
+  max-width: 110px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.alt-tab-item.selected {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--primary, #e95420);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  transform: scale(1.05);
+}
