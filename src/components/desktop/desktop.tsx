@@ -1,6 +1,43 @@
 // @ts-nocheck
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { BatteryFull, Bell, BellOff, Bluetooth, Calculator, ChevronDown, ChevronLeft, ChevronRight, File, Folder, Gauge, Grid3X3, Home, Lock, LogOut, Moon, Plane, Power, RotateCcw, Search, Settings, Sliders, Sun, Trash2, Volume2, VolumeX, Wifi, WifiOff, X } from 'lucide-react';
+import {
+  BatteryFull,
+  Bell,
+  BellOff,
+  Bluetooth,
+  Calculator,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  File,
+  Folder,
+  Gauge,
+  Grid3X3,
+  Home,
+  Lock,
+  LogOut,
+  Minus,
+  Moon,
+  MoveLeft,
+  MoveRight,
+  Pin,
+  PinOff,
+  Plane,
+  Power,
+  RotateCcw,
+  Search,
+  Settings,
+  Sliders,
+  Square,
+  Sun,
+  Trash2,
+  Volume2,
+  VolumeX,
+  Wifi,
+  WifiOff,
+  X
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import wallpaper from '@/assets/ubuntu-wallpaper.jpg';
 import * as fs from '@/lib/vfs';
@@ -61,23 +98,32 @@ export function Desktop() {
   const [popover, setPopover] = useState<'calendar' | 'system' | null>(null);
   const [powerMenu, setPowerMenu] = useState(false);
   const [context, setContext] = useState<{ x: number; y: number } | null>(null);
+  const [winMenu, setWinMenu] = useState<{ id: number; x: number; y: number } | null>(null);
   const [clock, setClock] = useState<Date | null>(null);
   const [monthOffset, setMonthOffset] = useState(0);
   const [session, setSession] = useState<SessionMode>('active');
   const lastActivity = useRef(Date.now());
 
+  // Alt + Tab Switcher HUD state
+  const [altTabOpen, setAltTabOpen] = useState(false);
+  const [altTabIndex, setAltTabIndex] = useState(0);
+  const altTabRef = useRef({ open: false, index: 0 });
+  altTabRef.current = { open: altTabOpen, index: altTabIndex };
+
   const closeMenus = () => { 
     setOverview(false); 
     setPopover(null); 
     setContext(null); 
+    setWinMenu(null);
     setPowerMenu(false); 
+    setAltTabOpen(false);
   };
 
   const focus = (id: number) => { 
     setActive(id); 
     setWindows(prev => {
       const target = prev.find(w => w.id === id);
-      if (target && target.workspace !== undefined && target.workspace !== currentWorkspace) {
+      if (target && target.workspace !== undefined && target.workspace !== -1 && target.workspace !== currentWorkspace) {
         setCurrentWorkspace(target.workspace);
       }
       return prev.map(w => w.id === id ? { ...w, z: Math.max(...prev.map(p => p.z), 1) + 1, minimized: false } : w);
@@ -206,7 +252,23 @@ export function Desktop() {
     }));
   }, [active]);
 
-  // Keyboard Shortcuts (Super+L, Super+S, Workspace switching, Snapping)
+  // Alt-release listener for Alt+Tab HUD
+  useEffect(() => {
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Alt' && altTabRef.current.open) {
+        const visibleWins = windows.filter(w => (w.workspace ?? 0) === currentWorkspace || w.workspace === -1);
+        const target = visibleWins[altTabRef.current.index];
+        if (target) {
+          focus(target.id);
+        }
+        setAltTabOpen(false);
+      }
+    };
+    window.addEventListener('keyup', onKeyUp);
+    return () => window.removeEventListener('keyup', onKeyUp);
+  }, [windows, currentWorkspace]);
+
+  // Keyboard Shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (session !== 'active') return;
@@ -242,13 +304,15 @@ export function Desktop() {
         setWindows(prev => prev.filter(w => w.id !== active)); 
       }
 
-      // Cycle windows: Alt + Tab
+      // Authentic Alt + Tab Switcher HUD
       if (e.altKey && e.key === 'Tab') { 
         e.preventDefault(); 
-        const currentWsWindows = windows.filter(w => (w.workspace ?? 0) === currentWorkspace);
-        const ordered = [...currentWsWindows].sort((a, b) => b.z - a.z); 
-        const next = ordered.length > 1 ? ordered[1] : ordered[0]; 
-        if (next) focus(next.id); 
+        const visibleWins = windows.filter(w => (w.workspace ?? 0) === currentWorkspace || w.workspace === -1);
+        if (visibleWins.length > 0) {
+          setAltTabOpen(true);
+          const step = e.shiftKey ? visibleWins.length - 1 : 1;
+          setAltTabIndex(prev => (prev + step) % visibleWins.length);
+        }
       }
 
       // Workspace switching: Ctrl+Alt+ArrowRight / Super+PageDown
@@ -335,7 +399,16 @@ export function Desktop() {
 
   const searchFiles = useMemo(() => {
     if (!trimmedQuery || !ready) return [];
-    return fs.search(trimmedQuery).slice(0, 6);
+    try {
+      const res = (fs.search as any)('root', trimmedQuery, false);
+      if (Array.isArray(res)) return res.slice(0, 6);
+    } catch {
+      try {
+        const res = (fs.search as any)(trimmedQuery);
+        if (Array.isArray(res)) return res.slice(0, 6);
+      } catch {}
+    }
+    return [];
   }, [trimmedQuery, ready]);
 
   const mathResult = useMemo(() => {
@@ -363,23 +436,37 @@ export function Desktop() {
     { label: 'Do Not Disturb', sub: s.dnd ? 'On' : 'Off', on: s.dnd, Icon: BellOff, act: () => setSettings({ dnd: !s.dnd }) },
   ];
 
+  // Windows visible on current workspace (or pinned to all workspaces)
+  const visibleWindows = windows.filter(win => (win.workspace ?? 0) === currentWorkspace || win.workspace === -1);
+  const activeWinObj = windows.find(w => w.id === (winMenu?.id ?? active));
+
   return <main ref={mainRef} className={cls} style={style} onContextMenu={e => { 
+    const titlebar = (e.target as HTMLElement).closest('.window-titlebar');
+    if (titlebar) {
+      e.preventDefault();
+      const targetId = activeWinObj?.id ?? active;
+      setWinMenu({ id: targetId, x: Math.min(e.clientX, window.innerWidth - 240), y: Math.min(e.clientY, window.innerHeight - 340) });
+      setContext(null);
+      setPopover(null);
+      return;
+    }
     if ((e.target as HTMLElement).closest('.app-window,.dock,.top-panel,.overview,.session-screen')) return; 
     e.preventDefault(); 
+    setWinMenu(null);
     setContext({ x: Math.min(e.clientX, window.innerWidth - 240), y: Math.min(e.clientY, window.innerHeight - 290) }); 
     setPopover(null); 
   }}>
     {wp ? <div className="desktop-wallpaper" style={{ background: wp }} /> : <img className="desktop-wallpaper" src={wallpaper} width={1920} height={1088} alt="Original purple Resolute Raccoon desktop wallpaper" />}
-    <div className="desktop-surface" onClick={() => { setPopover(null); setContext(null); }} />
+    <div className="desktop-surface" onClick={() => { setPopover(null); setContext(null); setWinMenu(null); }} />
 
-    {/* Top Panel with Dynamic Workspace Switcher Pill */}
+    {/* Top Panel with Dynamic Workspace Switcher */}
     <header className="top-panel">
       <div className="panel-left">
         <Button 
           variant="panel" 
           className="activities-button" 
           aria-label="Activities overview" 
-          onClick={() => { setOverview(!overview); setPopover(null); }}
+          onClick={() => { setOverview(!overview); setPopover(null); setWinMenu(null); }}
           onWheel={e => {
             e.preventDefault();
             if (e.deltaY > 0) setCurrentWorkspace(ws => Math.min(TOTAL_WORKSPACES - 1, ws + 1));
@@ -399,11 +486,11 @@ export function Desktop() {
         <span className="panel-app-name">{overview ? 'Activities' : currentApps.find(a => a.id === activeApp)?.name ?? 'Ubuntu Desktop'}</span>
       </div>
 
-      <Button variant="panel" className="clock-button" onClick={() => { setPopover(popover === 'calendar' ? null : 'calendar'); setOverview(false); }}>
+      <Button variant="panel" className="clock-button" onClick={() => { setPopover(popover === 'calendar' ? null : 'calendar'); setOverview(false); setWinMenu(null); }}>
         {dateStr}<span>{timeStr}</span>{s.dnd && <BellOff size={13} />}{!s.dnd && notices.length > 0 && <i className="clock-dot" />}
       </Button>
 
-      <Button variant="panel" className="system-button" aria-label="System menu" onClick={() => { setPopover(popover === 'system' ? null : 'system'); setOverview(false); setPowerMenu(false); }}>
+      <Button variant="panel" className="system-button" aria-label="System menu" onClick={() => { setPopover(popover === 'system' ? null : 'system'); setOverview(false); setWinMenu(null); setPowerMenu(false); }}>
         {s.airplane ? <Plane /> : wifiOn ? <Wifi /> : <WifiOff />}{btOn && <Bluetooth />}{s.muted || s.volume === 0 ? <VolumeX /> : <Volume2 />}<BatteryFull />{s.showBatteryPercent && <small>100%</small>}<ChevronDown />
       </Button>
     </header>
@@ -421,7 +508,7 @@ export function Desktop() {
           onClick={e => launch(app.id, e.shiftKey)}
         >
           <AppIcon app={app.id} />
-          {windows.some(w => w.app === app.id && w.id === active && !w.minimized && (w.workspace ?? 0) === currentWorkspace) && <span className="dock-active" />}
+          {windows.some(w => w.app === app.id && w.id === active && !w.minimized && ((w.workspace ?? 0) === currentWorkspace || w.workspace === -1)) && <span className="dock-active" />}
         </Button>
       ))}
       <div className="dock-divider" />
@@ -429,7 +516,7 @@ export function Desktop() {
         <span className="trash-icon"><Trash2 /></span>
       </Button>
       <div className="dock-spacer" />
-      <Button variant="dock" size="icon" className={overview ? 'overview-active' : ''} title="Show Applications" aria-label="Show Applications" onClick={() => { setOverview(!overview); setPopover(null); }}>
+      <Button variant="dock" size="icon" className={overview ? 'overview-active' : ''} title="Show Applications" aria-label="Show Applications" onClick={() => { setOverview(!overview); setPopover(null); setWinMenu(null); }}>
         <Grid3X3 className="show-apps-icon" />
       </Button>
     </nav>
@@ -448,8 +535,8 @@ export function Desktop() {
       ))}
     </div>
 
-    {/* Windows on active workspace */}
-    {windows.filter(win => (win.workspace ?? 0) === currentWorkspace).map(win => (
+    {/* Windows on active workspace (or pinned to all workspaces) */}
+    {visibleWindows.map(win => (
       <Window 
         key={win.id} 
         win={win} 
@@ -480,7 +567,7 @@ export function Desktop() {
         {/* Workspaces Horizontal Carousel */}
         <div className="workspaces-carousel" aria-label="Virtual workspaces">
           {Array.from({ length: TOTAL_WORKSPACES }).map((_, wsIdx) => {
-            const wsWindows = windows.filter(w => (w.workspace ?? 0) === wsIdx && !w.minimized);
+            const wsWindows = windows.filter(w => ((w.workspace ?? 0) === wsIdx || w.workspace === -1) && !w.minimized);
             const isCurrent = currentWorkspace === wsIdx;
             return (
               <div 
@@ -690,6 +777,7 @@ export function Desktop() {
       </section>
     )}
 
+    {/* Desktop Context Menu */}
     {context && (
       <div className="desktop-context shell-popover" style={{ left: context.x, top: context.y }}>
         <Button variant="desktop" onClick={newDesktopFolder}>New Folder</Button>
@@ -703,6 +791,86 @@ export function Desktop() {
         <div className="context-divider" />
         <Button variant="desktop" onClick={() => { setWindows(prev => prev.map(w => ({ ...w, minimized: true }))); setContext(null); }}>Show Desktop</Button>
       </div>
+    )}
+
+    {/* Window Titlebar Context Menu (GNOME Window Management) */}
+    {winMenu && activeWinObj && (
+      <div className="desktop-context shell-popover window-menu" style={{ left: winMenu.x, top: winMenu.y }}>
+        <Button variant="desktop" onClick={() => {
+          setWindows(prev => prev.map(w => w.id === activeWinObj.id ? { ...w, minimized: true } : w));
+          setWinMenu(null);
+        }}>
+          <Minus size={15} />Minimize
+        </Button>
+        <Button variant="desktop" onClick={() => {
+          setWindows(prev => prev.map(w => w.id === activeWinObj.id ? { ...w, maximized: !w.maximized } : w));
+          setWinMenu(null);
+        }}>
+          {activeWinObj.maximized ? <Copy size={15} /> : <Square size={15} />}
+          {activeWinObj.maximized ? 'Restore' : 'Maximize'}
+        </Button>
+
+        <div className="context-divider" />
+
+        {/* Pin window to all workspaces */}
+        <Button variant="desktop" onClick={() => {
+          setWindows(prev => prev.map(w => w.id === activeWinObj.id ? { ...w, workspace: w.workspace === -1 ? currentWorkspace : -1 } : w));
+          setWinMenu(null);
+        }}>
+          {activeWinObj.workspace === -1 ? <PinOff size={15} /> : <Pin size={15} />}
+          {activeWinObj.workspace === -1 ? 'Only on This Workspace' : 'Always on Visible Workspace'}
+        </Button>
+
+        {/* Move Left / Right Workspace */}
+        <Button 
+          variant="desktop" 
+          disabled={activeWinObj.workspace === -1 || currentWorkspace === 0} 
+          onClick={() => {
+            const nextWs = Math.max(0, currentWorkspace - 1);
+            setWindows(prev => prev.map(w => w.id === activeWinObj.id ? { ...w, workspace: nextWs } : w));
+            setCurrentWorkspace(nextWs);
+            setWinMenu(null);
+          }}
+        >
+          <MoveLeft size={15} />Move to Workspace Left
+        </Button>
+        <Button 
+          variant="desktop" 
+          disabled={activeWinObj.workspace === -1 || currentWorkspace === TOTAL_WORKSPACES - 1} 
+          onClick={() => {
+            const nextWs = Math.min(TOTAL_WORKSPACES - 1, currentWorkspace + 1);
+            setWindows(prev => prev.map(w => w.id === activeWinObj.id ? { ...w, workspace: nextWs } : w));
+            setCurrentWorkspace(nextWs);
+            setWinMenu(null);
+          }}
+        >
+          <MoveRight size={15} />Move to Workspace Right
+        </Button>
+
+        <div className="context-divider" />
+        <Button variant="desktop" className="text-red-400 hover:text-red-300" onClick={() => {
+          setWindows(prev => prev.filter(w => w.id !== activeWinObj.id));
+          setWinMenu(null);
+        }}>
+          <X size={15} />Close<small style={{ marginLeft: 'auto', opacity: 0.6 }}>Alt+F4</small>
+        </Button>
+      </div>
+    )}
+
+    {/* Alt + Tab GNOME Switcher HUD */}
+    {altTabOpen && (
+      <aside className="alt-tab-switcher" role="dialog" aria-label="Window Switcher">
+        {visibleWindows.map((win, idx) => (
+          <div 
+            key={win.id} 
+            className={`alt-tab-item ${idx === altTabIndex ? 'selected' : ''}`}
+            onClick={() => { focus(win.id); setAltTabOpen(false); }}
+          >
+            <AppIcon app={win.app} />
+            <span>{win.title}</span>
+          </div>
+        ))}
+      </aside>
     )}
 
     {banners.length > 0 && session === 'active' && (
