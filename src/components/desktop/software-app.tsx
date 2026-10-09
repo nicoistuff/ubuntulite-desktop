@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { openWith } from './use-vfs';
 import { useState } from 'react';
 import {
   Search, Download, Trash2, Check, Star, ShieldCheck,
@@ -112,9 +113,14 @@ export function SoftwareApp({ setTitle }: { setTitle?: (t: string) => void }) {
                 {installingId === detailApp.id ? (
                   <button className="btn-installing" disabled>Installing...</button>
                 ) : isInstalled(detailApp.id) ? (
-                  <button className="btn-uninstall" onClick={() => handleUninstall(detailApp)}>
-                    <Trash2 size={15} /> Uninstall
-                  </button>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button className="btn-install" onClick={() => openWith({ app: detailApp.id })}>
+                      Open
+                    </button>
+                    <button className="btn-uninstall" onClick={() => handleUninstall(detailApp)}>
+                      <Trash2 size={15} /> Uninstall
+                    </button>
+                  </div>
                 ) : (
                   <button className="btn-install" onClick={() => handleInstall(detailApp)}>
                     <Download size={15} /> Install ({detailApp.size})
@@ -208,11 +214,14 @@ export function SoftwareApp({ setTitle }: { setTitle?: (t: string) => void }) {
                       <small>{app.summary} • {app.size}</small>
                     </div>
                   </div>
-                  <div className="row-right">
-                    <button className="row-btn-uninstall" onClick={() => handleUninstall(app)}>
-                      <Trash2 size={14} /> Remove
-                    </button>
-                  </div>
+                    <div className="row-right" style={{ display: 'flex', gap: 8 }}>
+                      <button className="btn-install" style={{ padding: '6px 14px', fontSize: 12 }} onClick={() => openWith({ app: app.id })}>
+                        Open
+                      </button>
+                      <button className="row-btn-uninstall" onClick={() => handleUninstall(app)}>
+                        <Trash2 size={14} /> Remove
+                      </button>
+                    </div>
                 </div>
               ))}
             </div>
