@@ -16,7 +16,8 @@ export type AppId =
   | 'vlc'
   | 'libreoffice'
   | 'obsidian'
-  | 'disk-usage';
+  | 'disk-usage'
+  | 'system-monitor';
 
 export interface AppMetadata {
   id: AppId;
@@ -30,6 +31,7 @@ export const builtInApps: AppMetadata[] = [
   { id: 'editor', name: 'Text Editor', category: 'Utilities' },
   { id: 'calculator', name: 'Calculator', category: 'Utilities' },
   { id: 'calendar', name: 'Calendar', category: 'Utilities' },
+  { id: 'system-monitor', name: 'System Monitor', category: 'System' },
   { id: 'software', name: 'App Center', category: 'System' },
   { id: 'settings', name: 'Settings', category: 'System' },
 ];

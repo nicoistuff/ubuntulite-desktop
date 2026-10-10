@@ -78,6 +78,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "theme-color", content: "#2c001e" },
       { title: "Ubuntu Browser Desktop" },
       { name: "description", content: "Ubuntu 26.04 LTS browser desktop recreation" },
       { property: "og:title", content: "Ubuntu Browser Desktop" },
@@ -92,6 +93,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
   shellComponent: RootShell,
@@ -109,6 +111,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <body>
         {children}
         <Scripts />
+        <script dangerouslySetInnerHTML={{ __html: "if('serviceWorker' in navigator&&location.hostname!=='localhost'&&!location.hostname.includes('lovable'))addEventListener('load',()=>navigator.serviceWorker.register('sw.js'))" }} />
       </body>
     </html>
   );

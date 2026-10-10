@@ -6,6 +6,7 @@ import { EditorApp } from './editor-app';
 import { SettingsApp } from './settings-app';
 import { SoftwareApp } from './software-app';
 import { CalculatorApp } from './calculator-app';
+import { SystemMonitorApp } from './system-monitor-app';
 import {
   CalendarApp, MinesApp, DiskUsageApp, VlcApp,
   GimpApp, VsCodeApp, LibreOfficeApp, SuperTuxApp
@@ -19,6 +20,7 @@ export function AppContent({ app, path, setTitle = noop }: { app: AppId; path?: 
   if (app === 'editor') return <EditorApp path={path} setTitle={setTitle} />;
   if (app === 'software') return <SoftwareApp setTitle={setTitle} />;
   if (app === 'calculator') return <CalculatorApp setTitle={setTitle} />;
+  if (app === 'system-monitor') return <SystemMonitorApp />;
   if (app === 'calendar') return <CalendarApp />;
   if (app === 'mines') return <MinesApp />;
   if (app === 'disk-usage') return <DiskUsageApp />;
