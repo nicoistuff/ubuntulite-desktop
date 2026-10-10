@@ -6,6 +6,6 @@
 - [x] Phase 4: software center and application management.
 - [x] Phase 5: workspaces, shortcuts, search, lock and login.
 - [x] Phase 6: system monitor, media, utilities, polish.
-- [ ] Phase 7: PWA manifest + offline worker done; static GitHub Pages export pending.
+- [ ] Phase 7: install-as-app done; offline mode, GitHub Pages static export, final tests pending (out of credits).
 
 Phases 1–6 complete; Phase 7 in progress.
