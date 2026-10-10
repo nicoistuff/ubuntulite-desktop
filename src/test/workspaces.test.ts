@@ -51,6 +51,6 @@ describe('Phase 5: Workspaces & Global Search', () => {
   it('finds filesystem items matching search query', () => {
     const results = fs.search('root', 'Welcome', false);
     expect(results.length).toBeGreaterThan(0);
-    expect(results[0].name.toLowerCase()).toContain('welcome');
+    expect(results[0]?.name.toLowerCase()).toContain('welcome');
   });
 });
