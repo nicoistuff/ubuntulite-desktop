@@ -32,10 +32,17 @@ jobs:
       - name: Build static site
         run: bun run build
 
+      - name: Prepare Pages directory
+        run: |
+          if [ -d ".output/public" ]; then
+            mkdir -p dist/client
+            cp -a .output/public/. dist/client/
+          fi
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist/client
+          path: dist/client
 
   deploy:
     environment:
