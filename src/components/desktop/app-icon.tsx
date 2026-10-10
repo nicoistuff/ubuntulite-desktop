@@ -2,7 +2,7 @@
 import {
   FileText, Folder, Settings, Terminal, ShoppingBag,
   Calculator, Calendar, Bomb, Gamepad2, Code, Palette,
-  Film, BookOpen, HardDrive
+  Film, BookOpen, HardDrive, Activity
 } from 'lucide-react';
 import type { AppId } from './apps';
 
@@ -21,7 +21,8 @@ const ICON_MAP: Record<string, any> = {
   vlc: Film,
   libreoffice: BookOpen,
   obsidian: FileText,
-  'disk-usage': HardDrive
+  'disk-usage': HardDrive,
+  'system-monitor': Activity
 };
 
 export function AppIcon({ app, small = false }: { app: AppId; small?: boolean }) {
