@@ -38,6 +38,8 @@ jobs:
             mkdir -p dist/client
             cp -a .output/public/. dist/client/
           fi
+          # Convert script paths to relative so they load from GitHub Pages subfolders
+          find dist/client -name "*.html" -exec sed -i 's|/./assets/|./assets/|g' {} +
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
