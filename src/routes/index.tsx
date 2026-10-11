@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { Desktop } from '@/components/desktop/desktop';
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [
@@ -12,5 +13,11 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 function Index() {
+  useEffect(() => {
+    // Offline support, production only: the dev server must always serve fresh code.
+    if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {});
+    }
+  }, []);
   return <Desktop />;
 }
