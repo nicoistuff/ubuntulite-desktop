@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { Desktop } from '@/components/desktop/desktop';
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [
