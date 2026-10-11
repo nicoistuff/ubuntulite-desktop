@@ -298,7 +298,7 @@ input[type=range] { accent-color: var(--primary); width: 100%; }
 }
 .quick-tile:hover { background: var(--shell-border); }
 .quick-tile.selected {
-  background: var(--accent);
+  background: var(--primary);
   color: #fff;
 }
 .quick-tile svg { flex-shrink: 0; width: 18px; height: 18px; }
