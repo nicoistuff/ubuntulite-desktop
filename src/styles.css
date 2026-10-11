@@ -277,8 +277,33 @@ input[type=range] { accent-color: var(--primary); width: 100%; }
 
 
 /* Quick settings tiles */
-.quick-tile span { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
-.quick-tile small { opacity: 0.7; font-size: 11px; font-weight: 400; }
+.quick-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.quick-tile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--shell-raised);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: var(--shell-text);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  min-width: 0;
+}
+.quick-tile:hover { background: var(--shell-border); }
+.quick-tile.selected {
+  background: var(--accent);
+  color: #fff;
+}
+.quick-tile svg { flex-shrink: 0; width: 18px; height: 18px; }
+.quick-tile span { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+.quick-tile small { opacity: 0.7; font-size: 11px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 
 /* Notification banner content */
 .notice-banner > div { flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; margin: 0 10px; }
